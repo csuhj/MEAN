@@ -1,17 +1,29 @@
 var express = require("express");
 var bodyParser = require("body-parser");
 var jwt = require("jwt-simple");
+var _ = require("lodash");
 
 var app = express();
 app.use(bodyParser.json());
 
+var users = [{username: 'csuhj', password: 'pass'}];
 var secretKey = "OpenSesame";
 
-app.post('/session', function(req, res) {
-    var username = req.body.username
-    //TODO: Validate password
+function findUserByUsername(username) {
+    return _.find(users, {username: username});
+}
 
-    var token = jwt.encode({username: username}, secretKey);
+function validateUser(user, password) {
+    return user.password === password;
+}
+
+app.post('/session', function(req, res) {
+    var user = findUserByUsername(req.body.username);
+    if (!validateUser(user, req.body.password)) {
+        return res.send(401); //Unauthorized
+    }
+
+    var token = jwt.encode({username: user.username}, secretKey);
     res.json(token);
 });
 
